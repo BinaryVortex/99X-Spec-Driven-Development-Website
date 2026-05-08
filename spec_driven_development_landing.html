@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SDD — Spec-Driven Development</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg2: #111111;
+    --bg3: #181818;
+    --border: rgba(255,255,255,0.08);
+    --border-glow: rgba(141,180,106,0.2);
+    --accent: #8db46a;
+    --accent2: #c49fd4;
+    --accent3: #d4a86e;
+    --accent4: #a08898;
+    --accent5: #c8b87a;
+    --text: #e8e4dc;
+    --muted: #6e6a64;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 15px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(141,180,106,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(141,180,106,0.03) 1px, transparent 1px);
+    background-size: 48px 48px;
+    pointer-events: none;
+    z-index: 0;
+  }
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 48px;
+    height: 64px;
+    background: rgba(8,11,16,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+    color: var(--text);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .nav-logo span { color: var(--accent); }
+  .nav-tag {
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 300;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    list-style: none;
+  }
+  .nav-links a {
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+  .nav-cta {
+    font-size: 13px !important;
+    color: var(--accent) !important;
+    border: 1px solid rgba(141,180,106,0.3) !important;
+    padding: 6px 16px;
+    border-radius: 4px;
+    transition: background 0.2s !important;
+  }
+  .nav-cta:hover { background: rgba(141,180,106,0.08) !important; }
+  section { position: relative; z-index: 1; }
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 48px 80px;
+    position: relative;
+  }
+  .hero::after {
+    content: '';
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(141,180,106,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    border: 1px solid rgba(141,180,106,0.25);
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: 40px;
+    animation: fadeUp 0.6s ease both;
+  }
+  .badge-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+  .hero h1 {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: clamp(48px, 7vw, 88px);
+    line-height: 1.0;
+    letter-spacing: -3px;
+    margin-bottom: 12px;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+  .hero h1 .accent { color: var(--accent2); }
+  .hero h1 .dim { color: var(--muted); }
+  .hero-subtitle {
+    font-family: var(--mono);
+    font-size: 15px;
+    color: var(--muted);
+    max-width: 520px;
+    margin: 24px auto 48px;
+    line-height: 1.8;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    animation: fadeUp 0.6s 0.3s ease both;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #0a0a0a;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 12px 28px;
+    border-radius: 4px;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .btn-primary:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-secondary {
+    background: transparent;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 12px 28px;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .btn-secondary:hover { border-color: rgba(255,255,255,0.2); transform: translateY(-1px); }
+  .hero-terminal {
+    margin-top: 72px;
+    width: 100%;
+    max-width: 720px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    animation: fadeUp 0.6s 0.4s ease both;
+    background: var(--bg2);
+  }
+  .terminal-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+  .terminal-title {
+    font-size: 12px;
+    color: var(--muted);
+    margin-left: auto;
+    margin-right: auto;
+    letter-spacing: 1px;
+  }
+  .terminal-body {
+    padding: 24px 28px;
+    font-size: 13px;
+    line-height: 2;
+    text-align: left;
+  }
+  .t-line { display: block; }
+  .t-prompt { color: var(--accent); }
+  .t-cmd { color: var(--text); }
+  .t-comment { color: var(--muted); }
+  .t-output { color: var(--accent2); }
+  .t-success { color: var(--accent); }
+  .t-ctx { color: var(--accent3); }
+  .t-blank { display: block; height: 8px; }
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--accent);
+    vertical-align: middle;
+    animation: blink 1s infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  .section-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 48px;
+  }
+  .section-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 20px;
+  }
+  .section-label::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--accent);
+  }
+  h2 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: clamp(32px, 4vw, 48px);
+    line-height: 1.1;
+    letter-spacing: -1.5px;
+    margin-bottom: 20px;
+  }
+  .why {
+    padding: 120px 0;
+    border-top: 1px solid var(--border);
+  }
+  .why-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 64px;
+    align-items: start;
+    margin-top: 64px;
+  }
+  .why-left p {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.9;
+    max-width: 440px;
+  }
+  .why-left p + p { margin-top: 16px; }
+  .problem-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .problem-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 24px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg2);
+    transition: border-color 0.2s;
+  }
+  .problem-item:hover { border-color: rgba(0,230,200,0.15); }
+  .problem-num {
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 1px;
+    padding-top: 2px;
+    min-width: 28px;
+  }
+  .problem-text {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .problem-text strong {
+    display: block;
+    color: var(--text);
+    font-weight: 500;
+    margin-bottom: 4px;
+    font-size: 14px;
+  }
+  .principles {
+    padding: 120px 0;
+    border-top: 1px solid var(--border);
+  }
+  .principles-header {
+    max-width: 640px;
+    margin-bottom: 72px;
+  }
+  .principles-header p {
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.9;
+  }
+  .principles-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .principle-card {
+    background: var(--bg);
+    padding: 40px 36px;
+    transition: background 0.2s;
+  }
+  .principle-card:hover { background: var(--bg2); }
+  .principle-icon {
+    font-family: var(--mono);
+    font-size: 22px;
+    color: var(--accent);
+    margin-bottom: 24px;
+    letter-spacing: -1px;
+  }
+  .principle-card h3 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 18px;
+    letter-spacing: -0.5px;
+    margin-bottom: 12px;
+  }
+  .principle-card p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.8;
+  }
+  .process {
+    padding: 120px 0;
+    border-top: 1px solid var(--border);
+  }
+  .process-header { margin-bottom: 80px; }
+  .process-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    position: relative;
+  }
+  .process-steps::before {
+    content: '';
+    position: absolute;
+    top: 36px;
+    left: 72px;
+    right: 72px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3), var(--accent));
+    opacity: 0.3;
+    z-index: 0;
+  }
+  .step {
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+  .step-num {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    margin-bottom: 28px;
+    letter-spacing: 1px;
+    transition: border-color 0.2s;
+  }
+  .step:hover .step-num { border-color: var(--accent); }
+  .step h3 {
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -0.5px;
+    margin-bottom: 12px;
+  }
+  .step p {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 20px;
+  }
+  .step-link {
+    font-size: 12px;
+    color: var(--accent);
+    text-decoration: none;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 1px solid rgba(141,180,106,0.3);
+    padding-bottom: 2px;
+    transition: border-color 0.2s;
+  }
+  .step-link:hover { border-color: var(--accent); }
+  .diagram-section {
+    padding: 120px 0;
+    border-top: 1px solid var(--border);
+  }
+  .diagram-wrap {
+    margin-top: 64px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg2);
+    padding: 56px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .diagram-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(196,159,212,0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .diag-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    margin-bottom: 12px;
+  }
+  .diag-box {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    padding: 14px 20px;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    min-width: 140px;
+    text-align: center;
+    position: relative;
+  }
+  .diag-box.accent { border-color: rgba(141,180,106,0.4); color: var(--accent); }
+  .diag-box.purple { border-color: rgba(196,159,212,0.4); color: var(--accent2); }
+  .diag-box.red { border-color: rgba(212,168,110,0.4); color: var(--accent3); }
+  .diag-arrow {
+    font-size: 16px;
+    color: var(--muted);
+    padding: 0 12px;
+  }
+  .diag-center {
+    border: 2px solid rgba(141,180,106,0.5);
+    border-radius: 8px;
+    background: rgba(141,180,106,0.04);
+    padding: 20px 32px;
+    font-family: var(--sans);
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+    margin: 24px auto;
+    display: inline-block;
+  }
+  .cta-section {
+    padding: 120px 0 160px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+  }
+  .cta-section h2 { max-width: 600px; margin: 0 auto 20px; }
+  .cta-section p {
+    color: var(--muted);
+    font-size: 15px;
+    max-width: 440px;
+    margin: 0 auto 48px;
+    line-height: 1.8;
+  }
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 32px 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    z-index: 1;
+  }
+  .footer-left { font-size: 12px; color: var(--muted); }
+  .footer-links { display: flex; gap: 24px; }
+  .footer-links a {
+    font-size: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .footer-links a:hover { color: var(--accent); }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">
+    <span>SDD</span>
+    <span class="nav-tag">v1.0</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="#why">Why SDD</a></li>
+    <li><a href="#principles">Principles</a></li>
+    <li><a href="#process">Process</a></li>
+    <li><a href="https://github.com" class="nav-cta">GitHub →</a></li>
+  </ul>
+</nav>
+
+<section class="hero" id="home">
+  <div class="hero-badge">
+    <span class="badge-dot"></span>
+    Spec-Driven Development
+  </div>
+  <h1>
+    The spec<br>
+    <span class="accent">ships the</span><br>
+    <span class="dim">software.</span>
+  </h1>
+  <p class="hero-subtitle">
+    A structured methodology where machine-readable<br>
+    specifications drive every implementation decision —<br>
+    for humans and AI alike.
+  </p>
+  <div class="hero-actions">
+    <a href="#process" class="btn-primary">Explore the Process</a>
+    <a href="https://github.com" class="btn-secondary">View on GitHub</a>
+  </div>
+
+  <div class="hero-terminal">
+    <div class="terminal-bar">
+      <span class="dot dot-r"></span>
+      <span class="dot dot-y"></span>
+      <span class="dot dot-g"></span>
+      <span class="terminal-title">sdd — spec layer</span>
+    </div>
+    <div class="terminal-body">
+      <span class="t-line"><span class="t-comment"># generate from spec before writing any code</span></span>
+      <span class="t-blank"></span>
+      <span class="t-line"><span class="t-prompt">$</span> <span class="t-cmd">sdd spec load</span> <span class="t-ctx">./specs/user-auth.spec.md</span></span>
+      <span class="t-line"><span class="t-output">  ✦ Spec layer parsed — 12 requirements, 34 constraints</span></span>
+      <span class="t-blank"></span>
+      <span class="t-line"><span class="t-prompt">$</span> <span class="t-cmd">sdd generate</span> <span class="t-ctx">--from-spec --model claude-sonnet</span></span>
+      <span class="t-line"><span class="t-output">  ✦ Mapping requirements to implementation plan...</span></span>
+      <span class="t-line"><span class="t-output">  ✦ Validating edge cases against constraints...</span></span>
+      <span class="t-success">  ✔ Code generated — spec coverage: 100%</span>
+      <span class="t-blank"></span>
+      <span class="t-line"><span class="t-prompt">$</span> <span class="cursor"></span></span>
+    </div>
+  </div>
+</section>
+
+<section class="why" id="why">
+  <div class="section-inner">
+    <div class="why-grid">
+      <div class="why-left">
+        <div class="section-label">Why SDD</div>
+        <h2>Code without<br>a spec is<br>a guess.</h2>
+        <p>Modern LLMs generate code fast — but fast code that doesn't match the requirements is just technical debt in disguise.</p>
+        <p>SDD treats the specification as the contract. Every function, every edge case, every constraint is declared upfront — so what gets built is exactly what was agreed upon.</p>
+      </div>
+      <div class="why-right">
+        <div class="problem-list">
+          <div class="problem-item">
+            <span class="problem-num">01.</span>
+            <div class="problem-text">
+              <strong>Requirement drift</strong>
+              Features get built based on vague prompts, diverging from what stakeholders actually needed before a line is reviewed.
+            </div>
+          </div>
+          <div class="problem-item">
+            <span class="problem-num">02.</span>
+            <div class="problem-text">
+              <strong>Untested edge cases</strong>
+              Without explicit constraints, AI skips boundary conditions and failure modes — leaving silent bugs in production.
+            </div>
+          </div>
+          <div class="problem-item">
+            <span class="problem-num">03.</span>
+            <div class="problem-text">
+              <strong>No shared contract</strong>
+              Developers, QA, and AI agents each operate from different assumptions, making review and handoff unreliable.
+            </div>
+          </div>
+          <div class="problem-item">
+            <span class="problem-num">04.</span>
+            <div class="problem-text">
+              <strong>Untraceable decisions</strong>
+              When requirements change, there's no spec to diff — meaning broken behaviour is discovered in prod, not in planning.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="principles" id="principles">
+  <div class="section-inner">
+    <div class="principles-header">
+      <div class="section-label">Core Principles</div>
+      <h2>Three pillars<br>of living specs.</h2>
+      <p>SDD is built on a feedback loop where specifications, tests, and implementation remain in constant alignment — each informing and validating the others.</p>
+    </div>
+    <div class="principles-grid">
+      <div class="principle-card">
+        <div class="principle-icon">// 01</div>
+        <h3>Spec as<br>Contract</h3>
+        <p>Specifications are authored in structured, machine-readable markdown — versioned alongside code and treated as the canonical source of behavioural truth before any implementation begins.</p>
+      </div>
+      <div class="principle-card">
+        <div class="principle-icon">// 02</div>
+        <h3>Spec-First<br>Generation</h3>
+        <p>Every AI prompt is grounded in the relevant spec — functional requirements, edge cases, and acceptance criteria — before a single line of implementation is generated.</p>
+      </div>
+      <div class="principle-card">
+        <div class="principle-icon">// 03</div>
+        <h3>Continuous<br>Spec Loop</h3>
+        <p>Generated code is validated against the spec automatically. Approved deviations feed back into updated specifications — closing the loop and keeping intent and implementation in sync.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="process" id="process">
+  <div class="section-inner">
+    <div class="process-header">
+      <div class="section-label">The SDD Process</div>
+      <h2>Four steps.<br>One living contract.</h2>
+    </div>
+    <div class="process-steps">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3>Write the<br>Spec First</h3>
+        <p>Define behaviour before touching code. Capture functional requirements, constraints, edge cases, and acceptance criteria in structured markdown.</p>
+        <a href="https://github.com" class="step-link">Learn how →</a>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3>Generate<br>from Spec</h3>
+        <p>Inject the spec into every AI prompt. Generate implementation, tests, and types that are traceable to specific requirements — not just syntactically correct.</p>
+        <a href="https://github.com" class="step-link">Learn how →</a>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3>Validate<br>Coverage</h3>
+        <p>Run automated checks that map every generated artefact back to a spec requirement. Surface gaps before review, not after deployment.</p>
+        <a href="https://github.com" class="step-link">Learn how →</a>
+      </div>
+      <div class="step">
+        <div class="step-num">04</div>
+        <h3>Evolve the<br>Spec</h3>
+        <p>When requirements change, update the spec first. Let the diff drive regeneration — ensuring every downstream artefact stays in lockstep with intent.</p>
+        <a href="https://github.com" class="step-link">Learn how →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="diagram-section">
+  <div class="section-inner">
+    <div class="section-label">The SDD Feedback Loop</div>
+    <h2>Spec in.<br>Spec out.</h2>
+    <div class="diagram-wrap">
+      <div class="diag-row">
+        <div class="diag-box accent">Requirements</div>
+        <span class="diag-arrow">──▶</span>
+        <div class="diag-box purple">Living Spec</div>
+        <span class="diag-arrow">──▶</span>
+        <div class="diag-box accent">Spec Layer</div>
+      </div>
+      <div class="diag-row" style="gap:8px; margin:4px 0;">
+        <span style="color:var(--muted);font-size:11px;letter-spacing:1px;">↑</span>
+        <span style="flex:1;height:1px;background:var(--border);max-width:200px;margin:auto 0;"></span>
+        <span style="color:var(--accent);font-size:20px;">↓</span>
+        <span style="flex:1;height:1px;background:var(--border);max-width:200px;margin:auto 0;"></span>
+        <span style="color:var(--muted);font-size:11px;letter-spacing:1px;"></span>
+      </div>
+      <div class="diag-row">
+        <div class="diag-box red">Spec Evolution</div>
+        <span class="diag-arrow">◀──</span>
+        <div class="diag-box purple">Coverage Check</div>
+        <span class="diag-arrow">◀──</span>
+        <div class="diag-box red">AI Generation</div>
+      </div>
+      <div class="diag-center">Spec-Driven Development</div>
+      <p style="font-size:12px;color:var(--muted);margin-top:8px;letter-spacing:0.5px;">A closed loop where specifications and code co-evolve — no drift, no guesswork.</p>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <div class="section-inner">
+    <div class="section-label">Open Source</div>
+    <h2>Built in the open,<br>for everyone.</h2>
+    <p>SDD is a community-driven methodology. Contribute spec templates, share your workflows, and help define how humans and AI build software together.</p>
+    <div class="hero-actions">
+      <a href="https://github.com" class="btn-primary">Visit GitHub Repository</a>
+      <a href="https://github.com" class="btn-secondary">Read the Docs</a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-left">© 2025 Spec-Driven Development. Open Source.</div>
+  <div class="footer-links">
+    <a href="#">GitHub</a>
+    <a href="#">Twitter</a>
+    <a href="#">Docs</a>
+    <a href="#">Community</a>
+  </div>
+</footer>
+
+</body>
+</html>
